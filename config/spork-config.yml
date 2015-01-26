@@ -1,0 +1,28 @@
+default_environments:
+  - dev
+  - prod
+environment_groups:
+  magnetic:
+    - dev
+    - general
+    - loadtest
+    - prod
+    - qa
+    - testing
+    - uat
+  qa_group:
+    - qa
+    - uat
+    - testing
+  test_group:
+    - loadtest
+version_change_threshold: 2
+environment_path: "environments"
+role_path: "roles"
+custom_plugin_path: "spork-plugins"
+always_promote_remote: true
+plugins:
+  foodcritic:
+    tags: ['any']
+  git:
+    enabled: true
