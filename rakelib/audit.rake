@@ -21,27 +21,15 @@ namespace :audit do
   require 'rubygems'
   require 'chef'
   require 'json'
-  require 'unix_crypt'
-  require 'securerandom'
   require 'csv'
   require 'chef/rest'
   require 'chef/search/query'
   require 'benchmark'
 
-  require File.join(File.dirname(__FILE__), 'lib', 'audit')
+  task :chef_repo do |t, args|
+    query = Chef::Search::Query.new
+    csv_headers = ['Node(s)', 'Sample Node']
 
-  config_file = File.exists?(File.join(Dir.getwd, '.chef', 'knife.rb')) ?
-                File.join(Dir.getwd, '.chef', 'knife.rb') :
-                File.join(File.expand_path('~'), '.chef', 'knife.rb')
-  Chef::Config.from_file(config_file)
-
-  Rake::TaskManager.record_task_metadata = true
-
-  query = Chef::Search::Query.new
-  csv_headers = ['Node(s)', 'Sample Node']
-
-  desc "Generate roles audit"
-  task :roles do |t, args|
     unless ENV['NO_ROLES']
       CSV.open('audits/roles.csv', 'w') do |csv|
         csv << ['Role'] + csv_headers
