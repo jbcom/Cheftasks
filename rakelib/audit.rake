@@ -17,58 +17,61 @@
 # limitations under the License.
 
 
-namespace :chef do
-  task :audit do |t, args|
-    query = Chef::Search::Query.new
-    csv_headers = ['Node(s)', 'Sample Node']
+namespace :ct do
+  namespace :audit do
+    desc "Generate a CSV file with usage of roles and recipes for each node"
+    task :default do |t, args|
+      query = Chef::Search::Query.new
+      csv_headers = ['Node(s)', 'Sample Node']
 
-    unless ENV['NO_ROLES']
-      CSV.open('audits/roles.csv', 'w') do |csv|
-        csv << ['Role'] + csv_headers
+      unless ENV['NO_ROLES']
+        CSV.open('audits/roles.csv', 'w') do |csv|
+          csv << ['Role'] + csv_headers
 
-        d = Dir['roles/*.rb']
-        i = 0
-        l = d.length
-        t = 0
+          d = Dir['roles/*.rb']
+          i = 0
+          l = d.length
+          t = 0
 
-        d.each do |p|
-          t += Benchmark.realtime do
-            role = Chef::Role.new
-            role.from_file(p)
+          d.each do |p|
+            t += Benchmark.realtime do
+              role = Chef::Role.new
+              role.from_file(p)
 
-            nodes = query.search('node', "roles:#{role.name}")
-            sample_node = (nodes[2] > 0)? nodes[0].sample.name: 'None'
-            result_array = [role.name, nodes[2], sample_node]
-            csv << result_array
+              nodes = query.search('node', "roles:#{role.name}")
+              sample_node = (nodes[2] > 0)? nodes[0].sample.name: 'None'
+              result_array = [role.name, nodes[2], sample_node]
+              csv << result_array
+            end
+
+            print "\r#{i+=1}/#{l} roles [#{t.round(2)}s elapsed]"
           end
-
-          print "\r#{i+=1}/#{l} roles [#{t.round(2)}s elapsed]"
         end
       end
-    end
 
-    unless ENV['NO_COOKBOOKS']
-      csv_path = (ENV['DEFAULT_RECIPE_ONLY'])? 'audits/cookbooks_default_recipe_only.csv': 'audits/cookbooks_all_recipes.csv'
-      CSV.open(csv_path, 'w') do |csv|
-        csv << ['Cookbook', 'Recipe'] + csv_headers
+      unless ENV['NO_COOKBOOKS']
+        csv_path = (ENV['DEFAULT_RECIPE_ONLY'])? 'audits/cookbooks_default_recipe_only.csv': 'audits/cookbooks_all_recipes.csv'
+        CSV.open(csv_path, 'w') do |csv|
+          csv << ['Cookbook', 'Recipe'] + csv_headers
 
-        recipe_pattern = (ENV['DEFAULT_RECIPE_ONLY'])? 'site-cookbooks/*/recipes/default.rb': 'site-cookbooks/*/recipes/*.rb'
-        d = Dir[recipe_pattern]
-        i = 0
-        l = d.length
-        t = 0
+          recipe_pattern = (ENV['DEFAULT_RECIPE_ONLY'])? 'site-cookbooks/*/recipes/default.rb': 'site-cookbooks/*/recipes/*.rb'
+          d = Dir[recipe_pattern]
+          i = 0
+          l = d.length
+          t = 0
 
-        d.each do |p|
-          t += Benchmark.realtime do
-            cookbook = p.split('/')[1]
-            recipe = File.basename(p, File.extname(p))
-            nodes = query.search('node', "recipes:#{cookbook}\\:\\:#{recipe}")
-            sample_node = (nodes[2] > 0)? nodes[0].sample.name: 'None'
-            result_array = [cookbook, recipe, nodes[2], sample_node]
-            csv << result_array
+          d.each do |p|
+            t += Benchmark.realtime do
+              cookbook = p.split('/')[1]
+              recipe = File.basename(p, File.extname(p))
+              nodes = query.search('node', "recipes:#{cookbook}\\:\\:#{recipe}")
+              sample_node = (nodes[2] > 0)? nodes[0].sample.name: 'None'
+              result_array = [cookbook, recipe, nodes[2], sample_node]
+              csv << result_array
+            end
+
+            print "\r#{i+=1}/#{l} recipes [#{t.round(2)}s elapsed]"
           end
-
-          print "\r#{i+=1}/#{l} recipes [#{t.round(2)}s elapsed]"
         end
       end
     end

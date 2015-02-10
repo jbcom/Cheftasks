@@ -1,7 +1,7 @@
-namespace :chef do
+namespace :ct do
   namespace :server do
-    desc "Manipulate a Chef Server with chef_server_ctl\nOptional environment variables:\nKNIFE_GENERATE_ONLY=true (Outputs command for generating knife.rb)\nUSE_SUDO=true\nCHEF_SERVER_CTL_FLAG=subcommand1,..,subcommandN (Interfaces with chef_server_ctl on remote host)\n[See https://docs.chef.io/ctl_chef_server.html]\nmultiple subcommands will be executed in sequence"
-    task :chef_server_ctl, :fqdn, :user, :key_file do |t, args|
+    desc "Manipulate a Chef Server with chef_server_ctl (Requires server FQDN and optionally SSH user and key file)\n\tOptional environment variables:\n\tKNIFE_GENERATE_ONLY=true (Outputs command for generating knife.rb)\n\tUSE_SUDO=true\n\tCHEF_SERVER_CTL_FLAG=subcommand1,..,subcommandN (Interfaces with chef_server_ctl on remote host)\n\t[See https://docs.chef.io/ctl_chef_server.html]\n\tmultiple subcommands will be executed in sequence"
+    task :default, :fqdn, :user, :key_file do |t, args|
       if args[:fqdn]
         current_dir = File.dirname(__FILE__)
         home_dir    = ENV['HOME'] || ENV['HOMEDRIVE']
