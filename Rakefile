@@ -1,5 +1,5 @@
 #
-# Rakefile for Chef Server Repository
+# Cheftasks for chef-repo directory
 #
 # COPYRIGHT:: Jon Bogaty (<jon@jonbogaty.com>)
 # LICENSE:: Apache License, Version 2.0
@@ -17,10 +17,21 @@
 # limitations under the License.
 #
 
-require 'rubygems'
-require 'chef'
+namspace :chef do
+  require 'benchmark'
+  require 'chef'
+  require 'chef/rest'
+  require 'chef/search/query'
+  require 'csv'
+  require 'json'
+  require 'net/ssh'
+  require 'net/scp'
+  require 'rubygems'
+  require 'securerandom'
+  require 'unix_crypt'
+  
+  Rake::TaskManager.record_task_metadata = true
 
-Rake::TaskManager.record_task_metadata = true
-
-# Load constants from rake config file.
-require File.join(File.dirname(__FILE__), 'config', 'rake')
+  # Load constants from rake config file.
+  require File.join(File.dirname(__FILE__), 'config', 'cheftasks')
+end

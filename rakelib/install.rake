@@ -29,6 +29,8 @@ end
 
 desc "Install ChefDK and Cheftasks gems"
 task :install do
+  REPO_DIR = ENV['REPO_DIR'] || File.expand_path(File.join(File.dirname(__FILE__), ".."))
+
   sh 'which chef'
   unless $?.success?
     if MANAGER == 'brew'
@@ -57,13 +59,21 @@ task :install do
   CHEF_GEMS.each do |gem|
     install_gem gem
   end
+
+  make_symlinks(REPO_DIR)
 end
 
+
+desc "Update Cheftasks to the latest"
 task :update do
-  sh 'git pull --rebase'
+  sh 'git stash'
+  sh 'git checkout master'
+  sh 'git pull'
+  sh 'git stash pop'
 
   if $?.success?
-    Rake::Task["install"].execute
+    Rake::Task["install"].reenable
+    Rake::Task["install"].invoke
   else
     puts "Pulling from remote failed. Status of repository is:"
     sh 'git status'
@@ -85,4 +95,16 @@ def install_gem(name, elevate=ELEVATE)
   cmd = (elevate)? "sudo chef": 'chef'
   cmd += " gem install --no-ri --no-rdoc #{name}"
   sh cmd
+end
+
+private
+def make_symlinks(repo_dir)
+  FileUtils.mkdir_p "#{repo_dir}/config"
+  FileUtils.ln_sf "#{TOP_DIR}/config/cheftasks.rb", "#{repo_dir}/config/cheftasks.rb"
+  FileUtils.ln_sf "#{TOP_DIR}/rakelib", "#{repo_dir}/"
+  FileUtils.ln_sf "#{TOP_DIR}/Rakefile", "#{repo_dir}/"
+
+  FileUtils.cd(repo_dir) do
+    sh 'rake -T'
+  end
 end

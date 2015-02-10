@@ -17,16 +17,8 @@
 # limitations under the License.
 
 
-namespace :audit do
-  require 'rubygems'
-  require 'chef'
-  require 'json'
-  require 'csv'
-  require 'chef/rest'
-  require 'chef/search/query'
-  require 'benchmark'
-
-  task :chef_repo do |t, args|
+namespace :chef do
+  task :audit do |t, args|
     query = Chef::Search::Query.new
     csv_headers = ['Node(s)', 'Sample Node']
 
