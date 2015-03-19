@@ -78,7 +78,7 @@ namespace :ct do
       begin
         Dir.chdir(repo_dir) do
           Dir.mkdir 'config'
-          FileUtils.ln_sf "#{TOP_DIR}/config/cheftasks.rb", 'config/'
+          FileUtils.cp "#{TOP_DIR}/config/cheftasks.rb", 'config/cheftasks.rb'
 
           if Dir.exist? 'rakelib' and !File.symlink? 'rakelib'
             FileUtils.mv 'rakelib', 'sitelib'

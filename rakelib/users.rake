@@ -3,9 +3,38 @@ namespace :ct do
     desc "Create a new user databag"
     task :default, :user do |t, args|
       if args[:user]
-        puts "User created at #{users_path(args[:user])}"
+        puts "User created at #{users(args[:user])}"
       else
         puts "Required parameter 'user' missing"
+      end
+    end
+
+    desc "Create a Users recipe from databags"
+    task :generate_recipe, :recipe_name do |t, args|
+      args.with_defaults(recipe_name: 'users')
+
+      File::open("#{SITE_COOKBOOK}/recipes/#{args[:recipe_name]}.rb", 'w') do |f|
+        f << "# #{SITE_COOKBOOK_NAME}::#{args[:recipe_name]}"
+        f << "# Managed by Cheftasks"
+
+        users do |u|
+          f << "user '#{u['id']}' do"
+
+          %w(comment gid home iterations password provider salt shell supports system uid username).each do |x|
+            case u[x]
+            when String
+              f << "\t#{x} '#{u[x]}'"
+            when Fixnum
+              f << "\t#{x} #{u[x]}"
+            when Hash
+              f << "\t#{x} (#{u[x].to_s})"
+            else
+              puts "Ignoring parameter '#{x}' with value '#{u[x]}', unsupported type"
+            end
+          end
+
+          f << "end\n\n"
+        end
       end
     end
 
@@ -13,7 +42,7 @@ namespace :ct do
     task :prune_passwords, :group do |t, args|
       args.with_defaults(group: 'users')
 
-      Dir.glob(users_path) do |databag_file|
+      Dir.glob(users) do |databag_file|
         user_data = JSON.parse(File.read(databag_file))
 
         if args[:group]
@@ -37,7 +66,7 @@ namespace :ct do
       password_length = ENV['PASSWORD_LENGTH'] || DEFAULT_PASSWORD_LENGTH
 
       CSV.open("#{TOP_DIR}/default_passwords.csv", 'w') do |csv|
-        Dir.glob(users_path) do |databag_file|
+        Dir.glob(users) do |databag_file|
           user_data = JSON.parse(File.read(databag_file))
 
           if user_data["password"] and !ENV['REGENERATE']
@@ -68,7 +97,7 @@ namespace :ct do
       if args[:user]
         password_length = ENV['PASSWORD_LENGTH'] || DEFAULT_PASSWORD_LENGTH
         args.with_defaults(password: SecureRandom.hex(password_length))
-        databag_file = users_path(args[:user])
+        databag_file = users(args[:user])
         user_data = JSON.parse(File.read(databag_file)) 
         user_data['password'] = UnixCrypt::SHA512.build(user_password)
         user_json = JSON.pretty_generate(user_data)
@@ -84,7 +113,7 @@ namespace :ct do
     task :add_key, :user, :key_file do |t, args|
       begin
         key = (args[:key_file] || STDIN.read).chomp!
-        databag_file = users_path(args[:user])
+        databag_file = users(args[:user])
         user_data = JSON.parse(File.read(databag_file))
 
         if key.include?('PRIVATE KEY')
@@ -115,21 +144,30 @@ namespace :ct do
     end
 
     private
-    def users_path(databag_name = '')
-      users_path = File.join(DATABAGS_DIR, 'users')
-      FileUtils.mkdir_p users_path
+    def users(databag_name = '', &block)
+      p = File.join(DATABAGS_DIR, 'users')
+      FileUtils.mkdir_p p
 
       if databag_name
-        users_path = File.join(users_path, "#{databag_name}.json")
+        p = File.join(users, "#{databag_name}.json")
 
-        unless File.exist?(users_path)
+        unless File.exist?(p)
           user_data = { 'id' => databag_name }
           user_json = JSON.pretty_generate(user_data)
-          File.open(users_path, "w") { |f| f.write(user_json) }
+          File.open(users, "w") { |f| f.write(user_json) }
         end
       else
-        users_path = File.join(users_path, '*.json')
+        p = File.join(users, '*.json')
       end
+
+      if block_given?
+        Dir.glob(p) do |x|
+          d = JSON.parse(File.read(data))
+          block.call(d)
+        end
+      end
+
+      return p
     end
   end
 end

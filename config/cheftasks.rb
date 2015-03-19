@@ -1,9 +1,13 @@
 # Configure the Rakefile's tasks.
+# Setup preferences as necessary for your infrastructure
 
 # Translates to the root of chef-repo when symlinked
 HOME_DIR = ENV['HOME'] || File.expand_path('~')
 TOP_DIR = File.expand_path(File.join(File.dirname(__FILE__), ".."))
 DATABAGS_DIR = File.expand_path(File.join(TOP_DIR, 'data_bags'))
+COOKBOOKS_DIR = File.expand_path(File.join(TOP_DIR, 'cookbooks'))
+SITE_COOKBOOK_NAME = 'infrastructure'
+SITE_COOKBOOK = File.expand_path(COOKBOOKS_DIR, SITE_COOKBOOK_NAME)
 
 # Chef config
 KNIFE_CONFIG_FILE = File.exist?(File.join(TOP_DIR, '.chef', 'knife.rb')) ?
